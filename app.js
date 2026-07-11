@@ -19,7 +19,17 @@ function pause(message="Practice paused"){
   $("start").textContent="▶ Resume dictation"; status.textContent=message; render();
 }
 function makeUtterance(word){
-  const u=new SpeechSynthesisUtterance(word); u.lang=$("voice").value; u.rate=1; return u;
+  const wanted=$("voice").value;
+  const voices=speechSynthesis.getVoices();
+  const exact=voices.find(v=>v.lang.toLowerCase()===wanted.toLowerCase());
+  const english=voices.find(v=>v.lang.toLowerCase().startsWith("en-"));
+  const u=new SpeechSynthesisUtterance(word); u.lang=wanted; u.rate=1;
+  if(exact) u.voice=exact; else if(english) u.voice=english;
+  return u;
+}
+function speakUtterance(u,retry=0){
+  if(speechSynthesis.getVoices().length===0 && retry<10){setTimeout(()=>speakUtterance(u,retry+1),100);return}
+  speechSynthesis.resume(); speechSynthesis.speak(u);
 }
 function speakFrom(index){
   const token=playToken; current=index; clampPosition();
@@ -27,7 +37,7 @@ function speakFrom(index){
   status.textContent=`Listening ${current+1} of ${words.length}`; render();
   const u=makeUtterance(words[current]);
   const advance=()=>{if(!running||token!==playToken)return;if(current>=words.length-1){running=false;$("start").textContent="↻ Start again";status.textContent="Great work — your dictation is complete.";render();return}timer=setTimeout(()=>{if(running&&token===playToken)speakFrom(current+1)},Number($("gap").value)*1000)};
-  u.onend=advance; u.onerror=advance; speechSynthesis.speak(u);
+  u.onend=advance; u.onerror=advance; speakUtterance(u);
 }
 function startAtCurrent(){
   if(!words.length){status.textContent="Add or upload words to begin.";return}
@@ -41,8 +51,10 @@ $("preview").onclick=()=>{
   const wasRunning=running; playToken++; clearTimeout(timer); speechSynthesis.cancel(); running=false;
   const u=makeUtterance(words[current]); status.textContent=`Replay: ${words[current]}`;
   u.onend=()=>{if(wasRunning){running=true;$("start").textContent="Ⅱ Pause practice";playToken++;speakFrom(current)}else $("start").textContent="▶ Resume dictation"};
-  speechSynthesis.speak(u);
+  speakUtterance(u);
 };
+$("voice").onchange=()=>{speechSynthesis.cancel();status.textContent="Voice selected — press Replay current word to test."};
+speechSynthesis.onvoiceschanged=()=>render();
 $("progress").oninput=e=>{
   current=Number(e.target.value);
   $("position").textContent=`Word ${current+1} of ${words.length}`;
