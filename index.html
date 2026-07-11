@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Listenwell — English Dictation</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main>
+      <nav><div class="brand"><b>◒</b> listen<span>well</span></div><p>English listening lab</p></nav>
+      <section class="hero"><div><p class="eyebrow">WORD FILE → LISTENING PRACTICE</p><h1>Turn your word list into a <em>dictation.</em></h1><p class="lede">Upload a Word file. Every English word is extracted and read aloud one by one, with enough silence to write.</p></div><div class="card upload-card"><p class="eyebrow">STEP 1</p><h2>Upload your Word list</h2><label class="drop"><input id="file" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" /><strong>📄 Choose a .docx file</strong><small>Your file stays in your browser</small></label><label class="switch-row">Keep repeated words <input id="duplicates" type="checkbox" /><span></span></label></div></section>
+      <section class="practice"><div><p class="eyebrow yellow">STEP 2 · LISTEN AND WRITE</p><h2>Your dictation session</h2><p id="status">Ready for your first word</p><div class="wave" id="wave"></div><div class="controls"><button id="start">▶ Start dictation</button><button id="preview" class="secondary">Preview one word</button></div></div><aside><p class="eyebrow">YOUR SETTINGS</p><label>Time between words <b id="gap-value">4 seconds</b><input id="gap" type="range" min="3" max="5" value="4" /><small>3 sec　　4 sec　　5 sec</small></label><label>Reading voice<select id="voice"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="en-AU">English (Australia)</option></select></label><p class="tip">Keep the tab open while practicing. The browser reads each word once.</p></aside></section>
+      <section class="words"><div class="section-title"><div><p class="eyebrow">STEP 3 · REVIEW</p><h2>Recognised words</h2></div><button id="clear" class="link">Clear list</button></div><div class="word-list" id="word-list"></div></section>
+    </main>
+    <script src="https://unpkg.com/mammoth@1.12.0/mammoth.browser.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
