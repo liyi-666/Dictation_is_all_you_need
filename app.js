@@ -19,7 +19,7 @@ function pause(message="Practice paused"){
   $("start").textContent="▶ Resume dictation"; status.textContent=message; render();
 }
 function makeUtterance(word){
-  const u=new SpeechSynthesisUtterance(word); u.lang=$("voice").value; u.rate=Number($("speed").value); return u;
+  const u=new SpeechSynthesisUtterance(word); u.lang=$("voice").value; u.rate=1; return u;
 }
 function speakFrom(index){
   const token=playToken; current=index; clampPosition();
@@ -43,14 +43,23 @@ $("preview").onclick=()=>{
   u.onend=()=>{if(wasRunning){running=true;$("start").textContent="Ⅱ Pause practice";playToken++;speakFrom(current)}else $("start").textContent="▶ Resume dictation"};
   speechSynthesis.speak(u);
 };
-$("progress").oninput=e=>{pause("Position selected");current=Number(e.target.value);status.textContent=`Ready to start at word ${current+1}: ${words[current]}`;render()};
+$("progress").oninput=e=>{
+  current=Number(e.target.value);
+  $("position").textContent=`Word ${current+1} of ${words.length}`;
+  status.textContent=`Release to start from position ${current+1}`;
+};
+$("progress").onchange=e=>{
+  const target=Number(e.target.value);
+  pause("Position selected"); current=target;
+  status.textContent=`Ready to start at word ${current+1}`; render();
+};
 $("gap").oninput=e=>$("gap-value").textContent=`${e.target.value} ${e.target.value==="1"?"second":"seconds"}`;
 $("clear").onclick=()=>{pause();words=[];current=0;render();status.textContent="Upload a Word file or add a word to start again"};
 $("add-form").onsubmit=e=>{e.preventDefault();const input=$("new-word"),matches=input.value.match(/[A-Za-z]+(?:['’-][A-Za-z]+)*/g)||[];if(!matches.length){status.textContent="Please enter a valid English word.";return}pause("Word list updated");words.push(...matches);input.value="";render()};
 list.onclick=e=>{
   const chip=e.target.closest(".chip");if(!chip)return;const index=Number(chip.dataset.index);
   if(e.target.closest(".remove")){const removingCurrent=index===current;pause("Word removed");words.splice(index,1);if(index<current||removingCurrent&&current>=words.length)current--;clampPosition();render();return}
-  if(e.target.closest(".word-select")){pause("Position selected");current=index;status.textContent=`Ready to start at word ${current+1}: ${words[current]}`;render()}
+  if(e.target.closest(".word-select")){pause("Position selected");current=index;status.textContent=`Ready to start at word ${current+1}`;render()}
 };
 $("file").onchange=async e=>{const file=e.target.files[0];if(!file)return;if(!file.name.toLowerCase().endsWith(".docx")){status.textContent="Please choose a Word .docx file.";return}try{pause("Reading your Word file…");const result=await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});const all=result.value.match(/[A-Za-z]+(?:['’-][A-Za-z]+)*/g)||[];words=$("duplicates").checked?all:[...new Map(all.map(w=>[w.toLowerCase(),w])).values()];current=0;status.textContent=`Found ${words.length} English words in ${file.name}`;$("start").textContent="▶ Start dictation";render()}catch{status.textContent="I couldn’t read this file. Please upload a standard .docx file."}};
 render();
