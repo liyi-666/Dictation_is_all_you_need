@@ -1,0 +1,12 @@
+const sampleWords=["routine","thoughtful","stretching","before","checking","calendar","reliable","practice"];
+let words=[...sampleWords], current=-1, running=false, timer=null, cancelled=false;
+const $=id=>document.getElementById(id), status=$("status"), list=$("word-list");
+function render(){list.innerHTML=words.length?words.map((word,i)=>`<span class="chip ${i===current?"active":""}">${word}</span>`).join(""):`<span class="empty">Upload a Word file to create your word list.</span>`}
+function stop(){cancelled=true;clearTimeout(timer);speechSynthesis.cancel();running=false;current=-1;$("start").textContent="▶ Start dictation";status.textContent="Practice paused";render()}
+function speakFrom(index){if(cancelled||index>=words.length){running=false;current=-1;$("start").textContent="▶ Start dictation";status.textContent="Great work — your dictation is complete.";render();return}current=index;status.textContent=`Listening ${index+1} of ${words.length}`;render();const u=new SpeechSynthesisUtterance(words[index]);u.lang=$("voice").value;u.rate=.82;u.onend=()=>timer=setTimeout(()=>speakFrom(index+1),Number($("gap").value)*1000);u.onerror=()=>{if(!cancelled)timer=setTimeout(()=>speakFrom(index+1),Number($("gap").value)*1000)};speechSynthesis.speak(u)}
+$("start").onclick=()=>{if(running){stop();return}if(!words.length)return;speechSynthesis.cancel();cancelled=false;running=true;$("start").textContent="Pause practice";speakFrom(0)};
+$("preview").onclick=()=>{if(!words.length)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(words[0]);u.lang=$("voice").value;u.rate=.82;speechSynthesis.speak(u);status.textContent=`Preview: ${words[0]}`};
+$("gap").oninput=e=>$("gap-value").textContent=`${e.target.value} seconds`;
+$("clear").onclick=()=>{stop();words=[];render();status.textContent="Upload a Word file to start again"};
+$("file").onchange=async e=>{const file=e.target.files[0];if(!file)return;if(!file.name.toLowerCase().endsWith(".docx")){status.textContent="Please choose a Word .docx file.";return}try{status.textContent="Reading your Word file…";const result=await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});const all=result.value.match(/[A-Za-z]+(?:['’-][A-Za-z]+)*/g)||[];words=$("duplicates").checked?all:[...new Map(all.map(w=>[w.toLowerCase(),w])).values()];current=-1;status.textContent=`Found ${words.length} English words in ${file.name}`;render()}catch{status.textContent="I couldn’t read this file. Please upload a standard .docx file."}};
+render();
